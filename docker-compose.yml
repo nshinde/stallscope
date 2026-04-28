@@ -1,0 +1,19 @@
+services:
+  monitoring-tool:
+    build: .
+    image: monitoring-tool:local
+    container_name: monitoring-tool
+    restart: unless-stopped
+    gpus: all
+    environment:
+      # Use host procfs mount so network/system counters reflect host context.
+      MONITORING_PROCFS_ROOT: /host_proc
+    volumes:
+      - /proc:/host_proc:ro
+      # Optional: expose Prometheus textfile output to node_exporter collector path on host.
+      - ./artifacts:/artifacts
+    command:
+      - --interval-seconds
+      - "15"
+      - --prometheus-textfile
+      - /artifacts/monitoring_tool.prom
