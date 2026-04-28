@@ -1,4 +1,3 @@
-# Monitoring Tool
 
 A starter implementation of an all-in-one NVIDIA GPU + network monitoring utility with an early-signal profiler that labels a job as:
 
@@ -104,6 +103,7 @@ The output includes an `nccl` section with status, parsed time, and bandwidth me
 
 ## Next steps
 
-See architecture and expansion plan in:
+
+Starter documentation for building an all-in-one NVIDIA GPU + network monitoring and profiling system is available at:
 
 - `docs/all_in_one_gpu_network_monitoring_blueprint.md`
