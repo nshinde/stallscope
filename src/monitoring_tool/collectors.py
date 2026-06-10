@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from .models import GPUMetrics, NetworkMetrics, Snapshot, SystemMetrics
+from .jobcontext import collect_job_context
 from .pfc import collect_pfc_metrics
 from .rdma import collect_rdma_metrics
 
@@ -137,12 +138,14 @@ def collect_snapshot() -> Snapshot:
     net, net_warnings = collect_network_metrics()
     rdma, rdma_warnings = collect_rdma_metrics()
     pfc, pfc_warnings = collect_pfc_metrics([n.interface for n in net])
+    job, job_warnings = collect_job_context()
     system, system_warnings = collect_system_metrics()
     return Snapshot(
         gpus=gpus,
         net=net,
         rdma=rdma,
         pfc=pfc,
+        job=job,
         system=system,
-        warnings=[*gpu_warnings, *net_warnings, *rdma_warnings, *pfc_warnings, *system_warnings],
+        warnings=[*gpu_warnings, *net_warnings, *rdma_warnings, *pfc_warnings, *job_warnings, *system_warnings],
     )

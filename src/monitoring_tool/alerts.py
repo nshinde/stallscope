@@ -44,18 +44,39 @@ def send_alert_webhook(url: str, payload: dict[str, Any]) -> None:
     request.urlopen(req, timeout=5).read()
 
 
+def _escape_label_value(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("\n", "\\n").replace('"', '\\"')
+
+
+def _job_labels(snapshot: Snapshot) -> dict[str, str]:
+    if snapshot.job.scheduler == "UNKNOWN":
+        return {}
+    labels = {"scheduler": snapshot.job.scheduler}
+    if snapshot.job.job_id:
+        labels["job_id"] = snapshot.job.job_id
+    return labels
+
+
+def _metric_line(name: str, value: str | int | float, labels: dict[str, str]) -> str:
+    if not labels:
+        return f"{name} {value}"
+    rendered = ",".join(f'{key}="{_escape_label_value(label_value)}"' for key, label_value in labels.items())
+    return f"{name}{{{rendered}}} {value}"
+
+
 def render_prometheus_metrics(snapshot: Snapshot, profile: JobProfile, alerts: list[AlertEvent]) -> str:
     label_value = {"FAST": 0, "SLOW": 1, "FAIL_RISK": 2, "UNKNOWN": 3}.get(profile.label, 3)
+    job_labels = _job_labels(snapshot)
     lines = [
         "# HELP monitoring_profile_label Encoded profile label (0=FAST,1=SLOW,2=FAIL_RISK,3=UNKNOWN)",
         "# TYPE monitoring_profile_label gauge",
-        f"monitoring_profile_label {label_value}",
+        _metric_line("monitoring_profile_label", label_value, job_labels),
         "# HELP monitoring_profile_confidence Confidence score for current profile",
         "# TYPE monitoring_profile_confidence gauge",
-        f"monitoring_profile_confidence {profile.confidence}",
+        _metric_line("monitoring_profile_confidence", profile.confidence, job_labels),
         "# HELP monitoring_active_alerts Number of active alerts",
         "# TYPE monitoring_active_alerts gauge",
-        f"monitoring_active_alerts {len(alerts)}",
+        _metric_line("monitoring_active_alerts", len(alerts), job_labels),
     ]
 
     if snapshot.gpus:
@@ -63,14 +84,14 @@ def render_prometheus_metrics(snapshot: Snapshot, profile: JobProfile, alerts: l
         lines += [
             "# HELP monitoring_gpu_utilization_avg Average GPU utilization percent",
             "# TYPE monitoring_gpu_utilization_avg gauge",
-            f"monitoring_gpu_utilization_avg {avg_gpu_util:.2f}",
+            _metric_line("monitoring_gpu_utilization_avg", f"{avg_gpu_util:.2f}", job_labels),
         ]
 
     total_net_err = sum(n.rx_errs + n.tx_errs + n.rx_drop + n.tx_drop for n in snapshot.net)
     lines += [
         "# HELP monitoring_network_errors_total Sum of rx/tx errors and drops",
         "# TYPE monitoring_network_errors_total gauge",
-        f"monitoring_network_errors_total {total_net_err}",
+        _metric_line("monitoring_network_errors_total", total_net_err, job_labels),
     ]
 
     return "\n".join(lines) + "\n"

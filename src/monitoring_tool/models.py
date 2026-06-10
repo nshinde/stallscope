@@ -53,6 +53,15 @@ class PFCPauseMetrics:
 
 
 @dataclass
+class JobContext:
+    scheduler: str = "UNKNOWN"
+    job_id: str = ""
+    job_name: str = ""
+    user: str = ""
+    nodelist: str = ""
+
+
+@dataclass
 class SystemMetrics:
     load_1m: float
     load_5m: float
@@ -73,5 +82,6 @@ class Snapshot:
     net: list[NetworkMetrics] = field(default_factory=list)
     rdma: list[RDMAPortMetrics] = field(default_factory=list)
     pfc: list[PFCPauseMetrics] = field(default_factory=list)
+    job: JobContext = field(default_factory=JobContext)
     system: SystemMetrics | None = None
     warnings: list[str] = field(default_factory=list)
