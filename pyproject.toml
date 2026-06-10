@@ -9,6 +9,7 @@ description = "GPU training observability with RDMA fabric health correlation"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+license = "Apache-2.0"
 
 [project.scripts]
 stallscope = "monitoring_tool.cli:main"
