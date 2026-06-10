@@ -75,7 +75,6 @@ def _run_once(args, previous_snapshot=None):
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="stallscope",
         description="Collect GPU/network stats and predict job risk.",
     )
     parser.add_argument("--json", action="store_true", help="Print machine-readable output")
