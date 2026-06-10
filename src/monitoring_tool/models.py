@@ -44,6 +44,15 @@ class RDMAPortMetrics:
 
 
 @dataclass
+class PFCPauseMetrics:
+    interface: str
+    rx_pause: int | None = None
+    tx_pause: int | None = None
+    rx_prio_pause: dict[int, int] = field(default_factory=dict)
+    tx_prio_pause: dict[int, int] = field(default_factory=dict)
+
+
+@dataclass
 class SystemMetrics:
     load_1m: float
     load_5m: float
@@ -63,5 +72,6 @@ class Snapshot:
     gpus: list[GPUMetrics] = field(default_factory=list)
     net: list[NetworkMetrics] = field(default_factory=list)
     rdma: list[RDMAPortMetrics] = field(default_factory=list)
+    pfc: list[PFCPauseMetrics] = field(default_factory=list)
     system: SystemMetrics | None = None
     warnings: list[str] = field(default_factory=list)

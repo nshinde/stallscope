@@ -1,0 +1,5 @@
+NIC statistics:
+     rx_packets: 1000
+     tx_packets: 900
+     rx_pause: 101
+     tx_pause: 202

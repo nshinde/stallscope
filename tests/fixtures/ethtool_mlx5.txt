@@ -1,0 +1,19 @@
+NIC statistics:
+     rx_packets: 1000
+     tx_packets: 900
+     rx_prio0_pause: 0
+     rx_prio1_pause: 0
+     rx_prio2_pause: 0
+     rx_prio3_pause: 17
+     rx_prio4_pause: 0
+     rx_prio5_pause: 0
+     rx_prio6_pause: 0
+     rx_prio7_pause: 0
+     tx_prio0_pause: 0
+     tx_prio1_pause: 0
+     tx_prio2_pause: 0
+     tx_prio3_pause: 0
+     tx_prio4_pause: 23
+     tx_prio5_pause: 0
+     tx_prio6_pause: 0
+     tx_prio7_pause: 0
