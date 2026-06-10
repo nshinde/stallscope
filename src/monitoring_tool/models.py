@@ -36,6 +36,14 @@ class NetworkMetrics:
 
 
 @dataclass
+class RDMAPortMetrics:
+    device: str
+    port: str
+    counters: dict[str, int] = field(default_factory=dict)
+    hw_counters: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
 class SystemMetrics:
     load_1m: float
     load_5m: float
@@ -54,5 +62,6 @@ class Snapshot:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     gpus: list[GPUMetrics] = field(default_factory=list)
     net: list[NetworkMetrics] = field(default_factory=list)
+    rdma: list[RDMAPortMetrics] = field(default_factory=list)
     system: SystemMetrics | None = None
     warnings: list[str] = field(default_factory=list)
