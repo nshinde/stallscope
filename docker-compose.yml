@@ -1,8 +1,8 @@
 services:
-  monitoring-tool:
+  stallscope:
     build: .
-    image: monitoring-tool:local
-    container_name: monitoring-tool
+    image: stallscope:local
+    container_name: stallscope
     restart: unless-stopped
     gpus: all
     environment:
@@ -16,4 +16,4 @@ services:
       - --interval-seconds
       - "15"
       - --prometheus-textfile
-      - /artifacts/monitoring_tool.prom
+      - /artifacts/stallscope.prom

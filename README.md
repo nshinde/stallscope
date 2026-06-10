@@ -1,8 +1,8 @@
-# monitoring-tool
+# stallscope
 
 Correlate GPU training job health with RDMA fabric counters on the same node with shared job context.
 
-`monitoring-tool` is a Python 3.10+ observability utility for GPU training nodes. It collects local GPU, host, network, RDMA/RoCEv2, PFC pause, and scheduler context signals, then applies rule-based profiling to label the current job as `FAST`, `SLOW`, `FAIL_RISK`, or `UNKNOWN`.
+`stallscope` is a Python 3.10+ observability utility for GPU training nodes. It collects local GPU, host, network, RDMA/RoCEv2, PFC pause, and scheduler context signals, then applies rule-based profiling to label the current job as `FAST`, `SLOW`, `FAIL_RISK`, or `UNKNOWN`.
 
 The implementation is stdlib-only at runtime and is designed to keep parsing testable without GPU, RDMA, or Slurm/Kubernetes hardware by using pure parser functions and fixture-backed tests.
 
@@ -12,27 +12,27 @@ The implementation is stdlib-only at runtime and is designed to keep parsing tes
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
-monitoring-tool --json
+stallscope --json
 ```
 
 Run continuously every 30 seconds:
 
 ```bash
-monitoring-tool --interval-seconds 30 --json
+stallscope --interval-seconds 30 --json
 ```
 
 Write Prometheus textfile metrics for node_exporter:
 
 ```bash
-monitoring-tool \
+stallscope \
   --interval-seconds 30 \
-  --prometheus-textfile /var/lib/node_exporter/textfile_collector/monitoring_tool.prom
+  --prometheus-textfile /var/lib/node_exporter/textfile_collector/stallscope.prom
 ```
 
 Send alert webhook payloads when alerts are active:
 
 ```bash
-monitoring-tool \
+stallscope \
   --interval-seconds 30 \
   --alert-webhook-url http://alertmanager:9093/api/v2/alerts
 ```
@@ -40,7 +40,7 @@ monitoring-tool \
 Run the optional NCCL all-reduce benchmark if `all_reduce_perf` is installed and available in `PATH`:
 
 ```bash
-monitoring-tool --nccl-test --json
+stallscope --nccl-test --json
 ```
 
 ## What It Collects
@@ -90,7 +90,7 @@ Use the provided `Dockerfile` and `docker-compose.yml` to run the collector peri
 
 ```bash
 docker compose up --build -d
-docker compose logs -f monitoring-tool
+docker compose logs -f stallscope
 ```
 
 Full Docker and NVIDIA Container Toolkit setup notes are in `docs/docker_compose_gpu_guide.md`.

@@ -35,7 +35,7 @@ The test auto-skips if:
 Open terminal 1:
 
 ```bash
-monitoring-tool --interval-seconds 5 --json
+stallscope --interval-seconds 5 --json
 ```
 
 Open terminal 2 and run any GPU workload (examples):
@@ -55,5 +55,5 @@ PY
 or NCCL benchmark if available:
 
 ```bash
-monitoring-tool --nccl-test --json
+stallscope --nccl-test --json
 ```

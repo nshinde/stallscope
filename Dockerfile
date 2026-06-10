@@ -7,5 +7,5 @@ COPY src ./src
 
 RUN pip install --no-cache-dir -e .
 
-ENTRYPOINT ["monitoring-tool"]
+ENTRYPOINT ["stallscope"]
 CMD ["--json"]

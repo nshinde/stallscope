@@ -1,6 +1,6 @@
 # Docker Compose + NVIDIA Container Toolkit Guide
 
-This setup runs the monitoring tool periodically in a container with GPU access.
+This setup runs stallscope periodically in a container with GPU access.
 
 ## 1) Install NVIDIA Container Toolkit (host)
 
@@ -25,12 +25,12 @@ This uses:
 - `gpus: all` for GPU access
 - `/proc:/host_proc:ro` so network/system metrics read from host procfs
 - periodic mode (`--interval-seconds 15`)
-- Prometheus textfile output at `./artifacts/monitoring_tool.prom`
+- Prometheus textfile output at `./artifacts/stallscope.prom`
 
 ## 3) View logs
 
 ```bash
-docker compose logs -f monitoring-tool
+docker compose logs -f stallscope
 ```
 
 ## 4) Customize alert hooks
@@ -39,7 +39,7 @@ Example with webhook alerts:
 
 ```yaml
 services:
-  monitoring-tool:
+  stallscope:
     command:
       - --interval-seconds
       - "15"

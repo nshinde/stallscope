@@ -3,15 +3,15 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "monitoring-tool"
+name = "stallscope"
 version = "0.1.0"
-description = "NVIDIA GPU and network monitoring with simple job performance profiler"
+description = "GPU training observability with RDMA fabric health correlation"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
-monitoring-tool = "monitoring_tool.cli:main"
+stallscope = "monitoring_tool.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
