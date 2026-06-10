@@ -111,6 +111,10 @@ RUN_GPU_INTEGRATION=1 pytest -q -m integration
 
 Integration test details are in `docs/integration_test_guide.md`.
 
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
+
 ## Roadmap
 
 Future work, not implemented in this repository today:
