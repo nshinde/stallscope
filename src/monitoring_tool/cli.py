@@ -23,9 +23,9 @@ def _to_json(snapshot, profile, alerts, nccl_result=None) -> str:
     return json.dumps(payload, default=str, indent=2)
 
 
-def _run_once(args) -> None:
+def _run_once(args, previous_snapshot=None):
     snapshot = collect_snapshot()
-    profile = classify_job(snapshot)
+    profile = classify_job(snapshot, previous_snapshot)
     nccl_result = run_nccl_all_reduce_test() if args.nccl_test else None
     alerts = build_alerts(snapshot, profile)
 
@@ -48,6 +48,7 @@ def _run_once(args) -> None:
         print(_to_json(snapshot, profile, alerts, nccl_result))
     else:
         print(f"Prediction: {profile.label} (confidence={profile.confidence})")
+        print(f"Bottleneck hint: {profile.bottleneck_hint}")
         for reason in profile.reasons:
             print(f"- {reason}")
 
@@ -68,6 +69,8 @@ def _run_once(args) -> None:
             print("Warnings:")
             for warning in snapshot.warnings:
                 print(f"- {warning}")
+
+    return snapshot
 
 
 def main() -> None:
@@ -102,8 +105,9 @@ def main() -> None:
         return
 
     print(f"Running periodically every {args.interval_seconds} seconds. Press Ctrl+C to stop.")
+    previous_snapshot = None
     while True:
-        _run_once(args)
+        previous_snapshot = _run_once(args, previous_snapshot)
         time.sleep(args.interval_seconds)
 
 

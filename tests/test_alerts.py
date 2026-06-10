@@ -33,6 +33,7 @@ def test_render_prometheus_metrics_contains_core_series():
     metrics = render_prometheus_metrics(snapshot, profile, alerts)
     assert "monitoring_profile_label" in metrics
     assert "monitoring_active_alerts" in metrics
+    assert "monitoring_bottleneck_hint" in metrics
     assert "monitoring_network_errors_total" in metrics
 
 
@@ -49,3 +50,16 @@ def test_render_prometheus_metrics_adds_job_labels():
 
     assert 'monitoring_profile_label{scheduler="SLURM",job_id="123"}' in metrics
     assert 'monitoring_network_errors_total{scheduler="SLURM",job_id="123"}' in metrics
+
+
+def test_build_alerts_categorizes_fabric_reasons():
+    profile = JobProfile(
+        label="SLOW",
+        confidence=0.61,
+        reasons=["Fabric congestion detected: CNP/ECN rate 2.00/s"],
+        bottleneck_hint="network",
+    )
+
+    alerts = build_alerts(Snapshot(), profile)
+
+    assert any(alert.category == "fabric" for alert in alerts)

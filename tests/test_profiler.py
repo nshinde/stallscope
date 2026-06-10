@@ -1,4 +1,6 @@
-from monitoring_tool.models import GPUMetrics, NetworkMetrics, Snapshot
+from datetime import datetime, timedelta, timezone
+
+from monitoring_tool.models import GPUMetrics, NetworkMetrics, PFCPauseMetrics, RDMAPortMetrics, Snapshot
 from monitoring_tool.profiler import classify_job
 
 
@@ -27,6 +29,7 @@ def test_fast_profile_when_healthy():
 
     profile = classify_job(snapshot)
     assert profile.label == "FAST"
+    assert profile.bottleneck_hint == "unknown"
 
 
 def test_fail_risk_profile_when_multiple_signals():
@@ -41,9 +44,94 @@ def test_fail_risk_profile_when_multiple_signals():
 
     profile = classify_job(snapshot)
     assert profile.label == "FAIL_RISK"
+    assert profile.bottleneck_hint == "mixed"
     assert any("Network" in reason for reason in profile.reasons)
 
 
 def test_unknown_when_no_gpu():
     profile = classify_job(Snapshot(gpus=[], net=[]))
     assert profile.label == "UNKNOWN"
+
+
+def test_fabric_congestion_from_rdma_cnp_ecn_delta():
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    previous = Snapshot(
+        timestamp=start,
+        gpus=[gpu()],
+        rdma=[
+            RDMAPortMetrics(
+                device="mlx5_0",
+                port="1",
+                hw_counters={"np_cnp_sent": 10, "rp_cnp_handled": 20, "np_ecn_marked_roce_packets": 30},
+            )
+        ],
+    )
+    current = Snapshot(
+        timestamp=start + timedelta(seconds=10),
+        gpus=[gpu()],
+        rdma=[
+            RDMAPortMetrics(
+                device="mlx5_0",
+                port="1",
+                hw_counters={"np_cnp_sent": 15, "rp_cnp_handled": 25, "np_ecn_marked_roce_packets": 40},
+            )
+        ],
+    )
+
+    profile = classify_job(current, previous)
+
+    assert profile.label == "SLOW"
+    assert profile.bottleneck_hint == "network"
+    assert any("CNP/ECN rate 2.00/s" in reason for reason in profile.reasons)
+
+
+def test_fabric_errors_from_rdma_error_delta_drive_fail_risk():
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    previous = Snapshot(
+        timestamp=start,
+        gpus=[gpu()],
+        rdma=[
+            RDMAPortMetrics(
+                device="mlx5_0",
+                port="1",
+                hw_counters={"rnr_nak_retry_err": 0, "out_of_sequence": 0, "local_ack_timeout_err": 0},
+            )
+        ],
+    )
+    current = Snapshot(
+        timestamp=start + timedelta(seconds=10),
+        gpus=[gpu()],
+        rdma=[
+            RDMAPortMetrics(
+                device="mlx5_0",
+                port="1",
+                hw_counters={"rnr_nak_retry_err": 1, "out_of_sequence": 1, "local_ack_timeout_err": 1},
+            )
+        ],
+    )
+
+    profile = classify_job(current, previous)
+
+    assert profile.label == "FAIL_RISK"
+    assert profile.bottleneck_hint == "network"
+    assert any("RDMA retry/ordering/timeout" in reason for reason in profile.reasons)
+
+
+def test_pfc_pause_storm_from_delta():
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    previous = Snapshot(
+        timestamp=start,
+        gpus=[gpu()],
+        pfc=[PFCPauseMetrics(interface="ens3f0np0", rx_prio_pause={3: 100}, tx_prio_pause={3: 100})],
+    )
+    current = Snapshot(
+        timestamp=start + timedelta(seconds=1),
+        gpus=[gpu()],
+        pfc=[PFCPauseMetrics(interface="ens3f0np0", rx_prio_pause={3: 700}, tx_prio_pause={3: 600})],
+    )
+
+    profile = classify_job(current, previous)
+
+    assert profile.label == "SLOW"
+    assert profile.bottleneck_hint == "network"
+    assert any("PFC pause storm rate 1100.00/s" in reason for reason in profile.reasons)

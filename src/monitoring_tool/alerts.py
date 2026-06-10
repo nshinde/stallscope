@@ -20,7 +20,9 @@ def build_alerts(snapshot: Snapshot, profile: JobProfile) -> list[AlertEvent]:
     alerts: list[AlertEvent] = []
 
     for reason in profile.reasons:
-        if "Network" in reason:
+        if "Fabric" in reason or "RDMA" in reason or "CNP" in reason or "ECN" in reason or "PFC" in reason:
+            alerts.append(AlertEvent(severity="warning", category="fabric", message=reason))
+        elif "Network" in reason:
             alerts.append(AlertEvent(severity="warning", category="network", message=reason))
         elif "GPU" in reason or "Thermal" in reason or "Clock throttling" in reason:
             alerts.append(AlertEvent(severity="critical", category="gpu", message=reason))
@@ -66,6 +68,9 @@ def _metric_line(name: str, value: str | int | float, labels: dict[str, str]) ->
 
 def render_prometheus_metrics(snapshot: Snapshot, profile: JobProfile, alerts: list[AlertEvent]) -> str:
     label_value = {"FAST": 0, "SLOW": 1, "FAIL_RISK": 2, "UNKNOWN": 3}.get(profile.label, 3)
+    bottleneck_value = {"compute": 0, "network": 1, "memory": 2, "mixed": 3, "unknown": 4}.get(
+        profile.bottleneck_hint, 4
+    )
     job_labels = _job_labels(snapshot)
     lines = [
         "# HELP monitoring_profile_label Encoded profile label (0=FAST,1=SLOW,2=FAIL_RISK,3=UNKNOWN)",
@@ -74,6 +79,9 @@ def render_prometheus_metrics(snapshot: Snapshot, profile: JobProfile, alerts: l
         "# HELP monitoring_profile_confidence Confidence score for current profile",
         "# TYPE monitoring_profile_confidence gauge",
         _metric_line("monitoring_profile_confidence", profile.confidence, job_labels),
+        "# HELP monitoring_bottleneck_hint Encoded bottleneck hint (0=compute,1=network,2=memory,3=mixed,4=unknown)",
+        "# TYPE monitoring_bottleneck_hint gauge",
+        _metric_line("monitoring_bottleneck_hint", bottleneck_value, job_labels),
         "# HELP monitoring_active_alerts Number of active alerts",
         "# TYPE monitoring_active_alerts gauge",
         _metric_line("monitoring_active_alerts", len(alerts), job_labels),
