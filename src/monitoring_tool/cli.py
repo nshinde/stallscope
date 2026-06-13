@@ -9,6 +9,7 @@ from pathlib import Path
 from .alerts import build_alerts, render_prometheus_metrics, send_alert_webhook
 from .collectors import collect_snapshot
 from .nccl import run_nccl_all_reduce_test
+from .nccl_diag import analyze_nccl_config, format_nccl_report
 from .profiler import classify_job
 
 
@@ -43,6 +44,15 @@ def _run_once(args, previous_snapshot=None):
             send_alert_webhook(args.alert_webhook_url, payload)
         except Exception as exc:
             print(f"Warning: failed to send alert webhook: {exc}")
+
+    if args.nccl_diag:
+        diag_report = analyze_nccl_config()
+        if args.json:
+            import dataclasses
+            print(json.dumps(dataclasses.asdict(diag_report), default=str, indent=2))
+        else:
+            print(format_nccl_report(diag_report, verbose=True))
+        return snapshot
 
     if args.json:
         print(_to_json(snapshot, profile, alerts, nccl_result))
@@ -79,6 +89,11 @@ def main() -> None:
     )
     parser.add_argument("--json", action="store_true", help="Print machine-readable output")
     parser.add_argument("--nccl-test", action="store_true", help="Run NCCL all_reduce_perf benchmark if installed")
+    parser.add_argument(
+        "--nccl-diag",
+        action="store_true",
+        help="Analyze NCCL environment variables and suggest tuning flags",
+    )
     parser.add_argument(
         "--interval-seconds",
         type=int,
